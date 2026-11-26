@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>安全帽检测 · 演示台</title>
+<style>
+  :root {
+    --bg: #0e1517;
+    --panel: #121a1c;
+    --panel2: #182326;
+    --line: #26383d;
+    --text: #e6f2f4;
+    --muted: #8fa5aa;
+    --accent: #29b9d6;
+    --accent-dim: rgba(41,185,214,.14);
+    --ok: #3ddc97;
+    --danger: #ff6b78;
+    --warn-bg: rgba(255,107,120,.10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1000px 500px at 12% -10%, rgba(41,185,214,.10), transparent 60%),
+      radial-gradient(800px 400px at 100% 0%, rgba(61,220,151,.06), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 30px 22px 46px; }
+  header { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }
+  .logo {
+    width: 46px; height: 46px; flex: none; border-radius: 12px;
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, rgba(41,185,214,.22), rgba(41,185,214,.06));
+    border: 1px solid rgba(41,185,214,.35);
+  }
+  .logo svg { width: 26px; height: 26px; }
+  h1 { font-size: 21px; margin: 0 0 4px; letter-spacing: .4px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .chip {
+    margin-left: auto; display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: var(--accent); background: var(--accent-dim);
+    border: 1px solid rgba(41,185,214,.25); padding: 7px 12px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .grid { display: grid; grid-template-columns: minmax(320px, .86fr) minmax(0, 1.14fr); gap: 20px; align-items: start; }
+  .card {
+    background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--line); border-radius: 16px; padding: 22px;
+    box-shadow: 0 14px 34px rgba(0,0,0,.22);
+  }
+  .card-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 600; margin: 0 0 16px; }
+  .num {
+    width: 22px; height: 22px; border-radius: 6px; background: var(--accent-dim);
+    color: var(--accent); display: grid; place-items: center; font-size: 12px;
+  }
+  .drop {
+    border: 1.5px dashed #35505a; border-radius: 12px; background: rgba(255,255,255,.015);
+    padding: 30px 16px; text-align: center; cursor: pointer; transition: .18s;
+  }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-dim); }
+  .drop svg { width: 30px; height: 30px; color: var(--accent); opacity: .9; }
+  .drop p { margin: 10px 0 4px; font-size: 14px; }
+  .drop small { color: var(--muted); font-size: 12px; }
+  input[type=file] { display: none; }
+  .chosen {
+    margin-top: 11px; min-height: 18px; font-size: 12px; color: var(--accent);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .label-row { display: flex; justify-content: space-between; align-items: center; margin: 22px 0 8px; font-size: 13px; }
+  .label-row .val { color: var(--accent); font-variant-numeric: tabular-nums; font-weight: 600; }
+  input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+  .hint { color: var(--muted); font-size: 11px; margin-top: 6px; line-height: 1.5; }
+  button.primary {
+    width: 100%; margin-top: 20px; padding: 12px 16px; border: 0; border-radius: 10px;
+    background: linear-gradient(135deg, #29b9d6, #1d8fb0); color: #06161b;
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: .18s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  button.primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+  button.primary:disabled { opacity: .42; cursor: not-allowed; }
+  .samples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 18px; }
+  .sample {
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel);
+    cursor: pointer; padding: 0; color: var(--muted); transition: .18s; text-align: left;
+  }
+  .sample:hover, .sample.active { border-color: var(--accent); color: var(--text); }
+  .sample img { width: 100%; height: 66px; object-fit: cover; display: block; }
+  .sample span { display: block; font-size: 11px; padding: 6px 7px; }
+  .placeholder {
+    min-height: 330px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--muted); gap: 12px; text-align: center; border: 1px dashed var(--line); border-radius: 12px;
+  }
+  .placeholder svg { width: 46px; height: 46px; opacity: .42; }
+  .placeholder b { color: #b9cdd1; font-size: 14px; font-weight: 500; }
+  .placeholder small { font-size: 12px; }
+  .result-image {
+    width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block;
+    background: #0a1012;
+  }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; }
+  .stat .k { font-size: 11px; color: var(--muted); }
+  .stat .v { font-size: 22px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .stat.ok .v { color: var(--ok); }
+  .stat.bad .v { color: var(--danger); }
+  .banner {
+    margin-top: 12px; padding: 10px 13px; border-radius: 9px; font-size: 13px;
+    background: var(--warn-bg); border: 1px solid rgba(255,107,120,.3); color: #ff9aa4;
+  }
+  .banner.safe { background: rgba(61,220,151,.08); border-color: rgba(61,220,151,.25); color: var(--ok); }
+  .det-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin: 18px 0 7px; }
+  .det-list { max-height: 190px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; }
+  .det-list table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .det-list th { position: sticky; top: 0; background: var(--panel2); color: var(--muted); font-weight: 500; text-align: left; padding: 8px 10px; }
+  .det-list td { padding: 7px 10px; border-top: 1px solid rgba(38,56,61,.7); font-variant-numeric: tabular-nums; }
+  .tag { padding: 2px 7px; border-radius: 5px; font-size: 11px; }
+  .tag.ok { color: var(--ok); background: rgba(61,220,151,.1); }
+  .tag.bad { color: var(--danger); background: rgba(255,107,120,.1); }
+  .loading { display: none; align-items: center; gap: 8px; color: var(--accent); font-size: 13px; margin-top: 14px; }
+  .loading.on { display: flex; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(41,185,214,.25); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .err { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; }
+  .err.on { display: block; }
+  footer { margin-top: 22px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+  @media (max-width: 850px) {
+    .grid { grid-template-columns: 1fr; }
+    .chip { display: none; }
+    .wrap { padding: 20px 14px 34px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2 4 5.5V11c0 5 3.4 9.1 8 11 4.6-1.9 8-6 8-11V5.5L12 2Z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>安全帽佩戴检测 · 演示台</h1>
+      <div class="sub">YOLO26n 微调模型 · 本地 CPU 推理 · 上传即出检测图</div>
+    </div>
+    <div class="chip"><span class="dot"></span>模型就绪</div>
+  </header>
+
+  <div class="grid">
+    <!-- 左：输入 -->
+    <section class="card">
+      <div class="card-title"><span class="num">1</span>选择图片</div>
+      <div class="drop" id="drop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+        </svg>
+        <p>拖拽图片到这里，或点击选择</p>
+        <small>支持 JPG / PNG / BMP / WEBP，最大 20 MB</small>
+      </div>
+      <input type="file" id="file" accept=".jpg,.jpeg,.png,.bmp,.webp">
+      <div class="chosen" id="chosen">尚未选择文件</div>
+
+      <div class="label-row" style="margin-bottom:8px"><span>或者试试示例图</span></div>
+      <div class="samples">
+        <button class="sample" data-sample="sample_with_helmet.jpg" title="戴安全帽">
+          <img src="/sample/sample_with_helmet.jpg" alt="戴帽示例"><span>戴安全帽</span>
+        </button>
+        <button class="sample" data-sample="sample_no_helmet.jpg" title="未戴安全帽">
+          <img src="/sample/sample_no_helmet.jpg" alt="未戴帽示例"><span>未戴帽</span>
+        </button>
+        <button class="sample" data-sample="sample_group.jpg" title="工地近景">
+          <img src="/sample/sample_group.jpg" alt="工地示例"><span>工地近景</span>
+        </button>
+      </div>
+
+      <div class="label-row"><span>置信度阈值</span><span class="val" id="confVal">0.35</span></div>
+      <input type="range" id="conf" min="0.15" max="0.75" step="0.05" value="0.35">
+      <div class="hint">误报多就调高，漏检多就调低；默认 0.35 是实测较稳的值。</div>
+
+      <button class="primary" id="run" disabled>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        开始检测
+      </button>
+      <div class="loading" id="loading"><span class="spinner"></span><span>正在推理，请稍候…</span></div>
+      <div class="err" id="err"></div>
+    </section>
+
+    <!-- 右：结果 -->
+    <section class="card">
+      <div class="card-title"><span class="num">2</span>检测结果</div>
+      <div id="output">
+        <div class="placeholder" id="placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 15-5-5L5 20"/>
+          </svg>
+          <b>检测图会显示在这里</b>
+          <small>左侧上传图片或选择示例图，然后点击「开始检测」</small>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    说明：这是 400 张公开子集训练的教学模型，mAP50 ≈ 0.81，仅用于流程演示；<b>不能用于现场安全合规判定</b>。
+    模型识别的是「人头是否有帽」，不识别作业区域，办公室/教室里的人也会触发告警。
+  </footer>
+</div>
+
+<script>
+(function () {
+  const fileInput = document.getElementById('file');
+  const drop = document.getElementById('drop');
+  const chosen = document.getElementById('chosen');
+  const conf = document.getElementById('conf');
+  const confVal = document.getElementById('confVal');
+  const run = document.getElementById('run');
+  const loading = document.getElementById('loading');
+  const err = document.getElementById('err');
+  const output = document.getElementById('output');
+  let pendingFile = null;
+  let pendingSample = null;
+
+  function updateRun() {
+    run.disabled = !(pendingFile || pendingSample);
+  }
+  function setFile(f) {
+    pendingFile = f;
+    pendingSample = null;
+    chosen.textContent = f ? '已选择：' + f.name : '尚未选择文件';
+    document.querySelectorAll('.sample').forEach(b => b.classList.remove('active'));
+    updateRun();
+  }
+  function setSample(btn) {
+    pendingSample = btn.dataset.sample;
+    pendingFile = null;
+    fileInput.value = '';
+    chosen.textContent = '已选择示例：' + pendingSample;
+    document.querySelectorAll('.sample').forEach(b => b.classList.toggle('active', b === btn));
+    updateRun();
+  }
+
+  drop.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => setFile(e.target.files[0] || null));
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.add('drag');
+  }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.remove('drag');
+  }));
+  drop.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+  document.querySelectorAll('.sample').forEach(b => b.addEventListener('click', () => setSample(b)));
+  conf.addEventListener('input', () => confVal.textContent = parseFloat(conf.value).toFixed(2));
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function render(data) {
+    const { counts, alert, boxes } = data;
+    let rows = '';
+    if (!boxes.length) {
+      rows = '<tr><td colspan="4" style="color:var(--muted)">该阈值下未检出目标</td></tr>';
+    } else {
+      rows = boxes.map(b => {
+        const bad = b.cls === 1;
+        return '<tr><td><span class="tag ' + (bad ? 'bad' : 'ok') + '">' + esc(b.label) + '</span></td>' +
+          '<td>' + b.conf.toFixed(2) + '</td>' +
+          '<td>' + b.xyxy.map(v => Math.round(v)).join(', ') + '</td></tr>';
+      }).join('');
+    }
+    output.innerHTML =
+      '<img class="result-image" src="' + data.image + '?t=' + Date.now() + '" alt="检测结果">' +
+      '<div class="stats">' +
+        '<div class="stat ok"><div class="k">戴安全帽</div><div class="v">' + counts.helmet + '</div></div>' +
+        '<div class="stat bad"><div class="k">未戴帽</div><div class="v">' + counts.no_helmet + '</div></div>' +
+        '<div class="stat"><div class="k">总检测框</div><div class="v">' + counts.total + '</div></div>' +
+      '</div>' +
+      '<div class="banner' + (alert ? '' : ' safe') + '">' +
+        (alert ? '⚠ 检测到 ' + counts.no_helmet + ' 个未戴帽目标 —— 这里可接告警业务逻辑' : '✓ 本图未检出未戴帽目标') +
+      '</div>' +
+      '<div class="det-head"><span>检测框明细（按置信度排序）</span><span>耗时 ' + data.elapsed + ' s · 阈值 ' + data.conf + '</span></div>' +
+      '<div class="det-list"><table><thead><tr><th>类别</th><th>置信度</th><th>框坐标 x1,y1,x2,y2</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  run.addEventListener('click', async () => {
+    err.classList.remove('on');
+    loading.classList.add('on');
+    run.disabled = true;
+    const fd = new FormData();
+    fd.append('conf', conf.value);
+    if (pendingFile) fd.append('file', pendingFile);
+    else fd.append('sample', pendingSample);
+    try {
+      const res = await fetch('/detect', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      render(data);
+    } catch (e) {
+      err.textContent = '检测失败：' + e.message;
+      err.classList.add('on');
+    } finally {
+      loading.classList.remove('on');
+      updateRun();
+    }
+  });
+})();
+</script>
+</body>
+</html>

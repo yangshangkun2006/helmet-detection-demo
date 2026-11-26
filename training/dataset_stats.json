@@ -1,0 +1,49 @@
+{
+  "train": {
+    "source_zip": "train.zip",
+    "source_images": 13782,
+    "source_annotations": 38701,
+    "picked": 400,
+    "boxes": 1162,
+    "by_class": {
+      "hardhat": 631,
+      "no_hardhat": 531
+    },
+    "empty_images": 20,
+    "clipped_boxes": 0,
+    "missing_files": 0,
+    "verified_images": 400
+  },
+  "val": {
+    "source_zip": "valid.zip",
+    "source_images": 3962,
+    "source_annotations": 11174,
+    "picked": 100,
+    "boxes": 282,
+    "by_class": {
+      "hardhat": 183,
+      "no_hardhat": 99
+    },
+    "empty_images": 0,
+    "clipped_boxes": 0,
+    "missing_files": 0,
+    "verified_images": 100
+  },
+  "demo": {
+    "source_zip": "test.zip",
+    "source_images": 2001,
+    "source_annotations": 5518,
+    "picked": 10,
+    "boxes": 34,
+    "by_class": {
+      "hardhat": 15,
+      "no_hardhat": 19
+    },
+    "empty_images": 0,
+    "clipped_boxes": 0,
+    "missing_files": 0,
+    "verified_images": 10
+  },
+  "train_val_overlap": 0,
+  "errors": []
+}

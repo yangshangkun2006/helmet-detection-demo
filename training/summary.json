@@ -1,0 +1,110 @@
+{
+  "train": {
+    "elapsed_seconds": 351.93,
+    "peak_allocated_GiB": 4.339,
+    "device": "AMD Radeon Pro W7900D",
+    "torch": "2.12.0+rocm7.14.1",
+    "kwargs": {
+      "data": "/workspace/helmet_data/data.yaml",
+      "epochs": "30",
+      "imgsz": "640",
+      "batch": "16",
+      "device": "cuda",
+      "workers": "0",
+      "amp": "False",
+      "optimizer": "SGD",
+      "patience": "8",
+      "seed": "26",
+      "plots": "True",
+      "project": "/workspace/helmet_runs",
+      "name": "baseline",
+      "exist_ok": "True"
+    },
+    "run_dir": "/workspace/helmet_runs/baseline"
+  },
+  "weights": {
+    "path": "/workspace/helmet_runs/baseline/weights/best.pt",
+    "bytes": 5456773,
+    "sha256": "41c01ca0f49f0ab0e01f26a7c57e1a5c06a8535ede28c6e4cc3804318f0f5e74"
+  },
+  "validation": {
+    "mAP50_95": 0.4396,
+    "mAP50": 0.8115,
+    "mAP75": 0.4054,
+    "per_class_mAP50_95": [
+      0.3675,
+      0.5116
+    ],
+    "class_names": {
+      "0": "hardhat",
+      "1": "no_hardhat"
+    }
+  },
+  "demo": {
+    "images": 10,
+    "images_with_violation": 5,
+    "per_image": [
+      {
+        "image": "-4835-_png_jpg.rf.8eab906fa4f7dcfd81912bd5ce990fe0.jpg",
+        "hardhat": 5,
+        "no_hardhat": 0,
+        "alert": false
+      },
+      {
+        "image": "001688_jpg.rf.d4f564b8c0e2e600080a4ffcdbd481bc.jpg",
+        "hardhat": 1,
+        "no_hardhat": 9,
+        "alert": true
+      },
+      {
+        "image": "002542_jpg.rf.f12c449727343477b3f06fb5731a7c64.jpg",
+        "hardhat": 1,
+        "no_hardhat": 0,
+        "alert": false
+      },
+      {
+        "image": "IMG_3103_mp4-12_jpg.rf.70f7657efb7e063402d7142703de0318.jpg",
+        "hardhat": 0,
+        "no_hardhat": 0,
+        "alert": false
+      },
+      {
+        "image": "IMG_9950-1-_mp4-6_jpg.rf.8b44bd6046b8f01a92851194b1ecc2f3.jpg",
+        "hardhat": 0,
+        "no_hardhat": 1,
+        "alert": true
+      },
+      {
+        "image": "Image21_jpg.rf.b45d1f5fd24dd10f31fc00e15c5d2eb6.jpg",
+        "hardhat": 3,
+        "no_hardhat": 0,
+        "alert": false
+      },
+      {
+        "image": "PHOTriZgIKIgsnNLdBJG75vj200203_1000x2000_jpg.rf.4204fabb2747949fcc737a3114711e46.jpg",
+        "hardhat": 0,
+        "no_hardhat": 4,
+        "alert": true
+      },
+      {
+        "image": "RPReplay_Final1667001201_MP4-240_jpg.rf.eec0a934099cf7f7f96215d615696f75.jpg",
+        "hardhat": 0,
+        "no_hardhat": 1,
+        "alert": true
+      },
+      {
+        "image": "RPReplay_Final1667001201_MP4-60_jpg.rf.91da41687f6547c98608bfc14e6748b3.jpg",
+        "hardhat": 0,
+        "no_hardhat": 1,
+        "alert": true
+      },
+      {
+        "image": "additional_tests-Nomask-wearing_mp4-27_jpg.rf.f7752279423170bd85ef6da8ce37ec1f.jpg",
+        "hardhat": 0,
+        "no_hardhat": 0,
+        "alert": false
+      }
+    ],
+    "annotated_dir": "/workspace/helmet_runs/demo_pred"
+  }
+}

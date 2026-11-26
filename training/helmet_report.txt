@@ -1,0 +1,113 @@
+安全帽检测模型 · 训练与验收报告
+生成时间：2026-11-09（北京时间）
+执行位置：AMD Radeon Cloud 实例 j-chznlmvt5wfgpf4tokeuxtjw5p
+          AMD Radeon Pro W7900D / gfx1100 / 48 GiB
+
+============================================================
+一、这次做了什么
+============================================================
+在 Day1 已装好的 ROCm 环境上，用公开安全帽数据集微调 YOLO26n，
+产出可推理的 best.pt，并真跑一遍「训练完怎么用」：
+推理 -> 输出框/类别/置信度 -> 未戴帽计数告警 -> 保存带框图。
+
+============================================================
+二、数据（零手工标注）
+============================================================
+来源：keremberke/hard-hat-detection（Roboflow 导出，COCO json + jpg）
+下载：hf-mirror.com（官方 huggingface.co / images.cocodataset.org 在这台机器上不通）
+官方划分：train 13782 / valid 3962 / test 2001，共 19745 张，均为 640x640
+类别：0 = hardhat（戴了安全帽）  1 = no_hardhat（没戴安全帽的人头）
+
+本地子集（分层抽样，seed=26，保证少数类覆盖）：
+  train 400 张 / 1162 框：hardhat 631、no_hardhat 531，含 20 张空图（对应空 txt）
+  val   100 张 /  282 框：hardhat 183、no_hardhat 99
+  demo   10 张 /   34 框：取自官方 test 划分，训练与验证完全没见过
+转换：COCO [x,y,w,h] -> YOLO 归一化 [cx,cy,w,h]，越界裁剪 0 处
+校验：0 缺失文件、0 格式错、0 归一化越界、train/val 零重名  => DATA_PREP_OK
+
+============================================================
+三、训练配置
+============================================================
+起始权重：/workspace/yolo26-rocm-day1-labs/yolo26n.pt（5.3 MB，COCO 80 类预训练）
+运行环境：Day1 的 .venv，torch 2.12.0+rocm7.14.1 / ultralytics 8.4.207
+参数：epochs=30, imgsz=640, batch=16, optimizer=SGD, patience=8, seed=26,
+      workers=0, amp=False  （沿用课程 Lab C 在 ROCm 上验证过的稳妥配置）
+预训练迁移：696/708 项；模型规模 260 层 / 2,504,580 参数 / 5.9 GFLOPs
+耗时：351.93 秒（约 5 分 52 秒），峰值显存 4.339 GiB，GPU 使用率约 73%
+收敛：train/val loss 持续下降；mAP50 从 0.35 升到 0.811 后趋稳，未触发早停
+
+============================================================
+四、验收结果
+============================================================
+独立 val（100 张 / 282 框）：
+  mAP50-95 = 0.4396
+  mAP50    = 0.8115
+  mAP75    = 0.4054
+  分类 mAP50-95：hardhat 0.3675 / no_hardhat 0.5116
+
+best.pt：5,456,773 B
+  sha256 41c01ca0f49f0ab0e01f26a7c57e1a5c06a8535ede28c6e4cc3804318f0f5e74
+  （本机副本与云端逐字节一致，已全量 SHA256 比对）
+
+实跑验证（用交付的 use_helmet_model.py 独立执行，非训练脚本自带流程）：
+  10 张未见过图片 -> hardhat 10 个框、no_hardhat 16 个框、5 张触发告警
+  与训练 summary.json 完全一致；带框图已生成并目视复核（框贴合头部、置信度 0.63~0.85）
+
+============================================================
+五、本机产物清单（Day1/helmet/）
+============================================================
+best.pt                     训练好的权重（本机版）
+use_helmet_model.py         推理 + 违规计数脚本（已实测）
+prepare_helmet_data.py      数据准备：COCO -> YOLO、分层抽样、完整性校验
+train_helmet.py             训练 + 评估 + demo 推理
+run_helmet.sh               云端一键复现链
+helmet_report.txt           本报告
+summary.json                结构化结果（参数、指标、demo 明细）
+helmet_data.yaml            data.yaml（云端绝对路径版）
+dataset_stats.json          数据集统计与校验结果
+epoch_metrics.txt           逐 epoch 的 P / R / mAP50 / mAP50-95
+train_clean.log             清理进度条后的完整训练日志
+run_chain.log               一键链原始日志
+assets/                     results.png、两张混淆矩阵、results.csv、
+                            val_batch0/1_pred.jpg、args.yaml
+demo/                       3 张带框样例图：
+                            sample_alert_group.jpg（多人未戴帽）
+                            sample_alert_phone.jpg（4 人未戴帽）
+                            sample_all_helmet.jpg（全员戴帽）
+
+============================================================
+六、怎么用
+============================================================
+云端 GPU（最快，无需另装东西）：
+  cd /workspace
+  /workspace/yolo26-rocm-day1-labs/.venv/bin/python use_helmet_model.py \
+      --weights /workspace/helmet_runs/baseline/weights/best.pt \
+      --source /workspace/helmet_data/images/demo --conf 0.35 --save
+
+本机 Windows（普通电脑即可，不需要 GPU）：
+  pip install ultralytics          # 会带 CPU 版 torch，几百 MB
+  python use_helmet_model.py --weights best.pt --source 你的照片.jpg --save
+  python use_helmet_model.py --weights best.pt --source 图片目录/ --conf 0.5
+  python use_helmet_model.py --weights best.pt --source 视频.mp4 --save
+  python use_helmet_model.py --weights best.pt --source 0   # 本机摄像头，Ctrl+C 退出
+
+  --conf 是最顺手的旋钮：误报多调高（0.35 -> 0.5），漏检多调低。
+  「发现违规后做什么」是脚本里 if n_violation: 之后你自己的业务代码
+  （写 CSV / 存截图 / 推消息 / 亮灯），模型只负责输出框和置信度。
+
+复现（换实例后）：
+  把 Day1/helmet/ 下 4 个脚本推到云端 /workspace，备好
+  /workspace/helmet_src/{train,valid,test}.zip 及 Day1 的 .venv、yolo26n.pt，然后
+  cd /workspace && setsid nohup bash run_helmet.sh > helmet_run.log 2>&1 < /dev/null &
+  注意：外层代理对单条 SSH 流有约 1MB 上限，取回 best.pt 需分 512KB 块传输。
+
+============================================================
+七、必须知道的边界
+============================================================
+1. 这是 400 张公开子集 / 30 epoch 的教学练习模型，mAP50 0.8115 只是该子集上的数字。
+   换工地、光照、摄像头角度都会掉，不能真拿去做现场安全合规判定。
+2. no_hardhat 标注的是「没戴帽的人头」，不是完整人体。要判定「这个人到底戴没戴」，
+   要么在下游写 head/helmet 框的配对规则，要么改训 with_helmet / without_helmet 两类。
+3. 许可：数据集与 Ultralytics（AGPL-3.0 / Enterprise 双许可）用于学习研究没问题，
+   商用前需核对条款。
+4. 本次训练约消耗 6 分钟 GPU 时长；实例不用时记得销毁，否则持续计时。
